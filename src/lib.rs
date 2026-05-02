@@ -25,8 +25,8 @@ use proc_macro::TokenStream;
 use proc_macro2::{Span, TokenStream as TokenStream2};
 use quote::quote;
 use syn::{
-    Error, FnArg, Ident, ItemFn, Pat, PatIdent, Receiver, Result, Type, parse_macro_input,
-    parse_quote,
+    Error, FnArg, Generics, Ident, ItemFn, Pat, PatIdent, Receiver, Result, Type,
+    parse_macro_input, parse_quote,
 };
 
 #[proc_macro_attribute]
@@ -42,12 +42,12 @@ pub fn methodify(args: TokenStream, input: TokenStream) -> TokenStream {
 
     let function = parse_macro_input!(input as ItemFn);
 
-    expand(function)
+    expand(&function)
         .unwrap_or_else(Error::into_compile_error)
         .into()
 }
 
-fn expand(function: ItemFn) -> Result<TokenStream2> {
+fn expand(function: &ItemFn) -> Result<TokenStream2> {
     if function.sig.asyncness.is_some() {
         return Err(Error::new_spanned(
             function.sig.asyncness,
@@ -73,7 +73,7 @@ fn expand(function: ItemFn) -> Result<TokenStream2> {
     let receiver = receiver_for(first_arg)?;
     let impl_type = impl_type_for(first_arg)?;
     *first_arg = FnArg::Receiver(receiver);
-    method_sig.generics = Default::default();
+    method_sig.generics = Generics::default();
 
     let first_arg_name = first_arg_name(function.sig.inputs.first().expect("checked above"))?;
     let function_name = &function.sig.ident;
@@ -125,15 +125,11 @@ fn impl_type_for(first_arg: &FnArg) -> Result<Type> {
 }
 
 fn first_arg_name(first_arg: &FnArg) -> Result<TokenStream2> {
-    let FnArg::Typed(arg) = first_arg else {
+    let FnArg::Typed(_) = first_arg else {
         return Err(Error::new_spanned(first_arg, "expected a typed argument"));
     };
 
-    match arg.ty.as_ref() {
-        Type::Reference(reference) if reference.mutability.is_some() => Ok(quote!(self)),
-        Type::Reference(_) => Ok(quote!(self)),
-        _ => Ok(quote!(self)),
-    }
+    Ok(quote!(self))
 }
 
 fn argument_expression(arg: &FnArg) -> TokenStream2 {
