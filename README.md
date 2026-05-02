@@ -1,6 +1,6 @@
 # methodify
 
-`methodify` is a proc-macro attribute that turns a free function into:
+`methodify` is a proc-macro attribute that turns a function into:
 
 - a trait declaration
 - an implementation of that trait for the function's first argument
@@ -20,9 +20,6 @@ fn is_executable<P: AsRef<Path>>(path: &P) -> bool {
         metadata.is_file() && metadata.permissions().mode() & 0o111 != 0
     })
 }
-
-let executable = std::env::current_exe().unwrap();
-assert!(executable.is_executable());
 ```
 
 The above use of `methodify` expands to:
@@ -47,7 +44,7 @@ fn is_executable<P: AsRef<Path>>(path: &P) -> bool {
 }
 ```
 
-The original free function is preserved, so both `is_executable(&path)` and
+The original function is preserved, so both `is_executable(&path)` and
 `path.is_executable()` are available.
 
 The trait name is inferred from the function name in UpperCamelCase. For
