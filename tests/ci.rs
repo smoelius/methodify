@@ -1,0 +1,86 @@
+use assert_cmd::assert::OutputAssertExt;
+use regex::Regex;
+use std::{fs::read_to_string, path::Path, process::Command};
+use tempfile::tempdir;
+
+#[test]
+fn clippy() {
+    Command::new("cargo")
+        .args([
+            "+nightly",
+            "clippy",
+            "--all-features",
+            "--all-targets",
+            "--",
+            "--deny=warnings",
+        ])
+        .assert()
+        .success();
+}
+
+#[test]
+fn dylint() {
+    Command::new("cargo")
+        .args(["dylint", "--all", "--", "--all-targets"])
+        .env("DYLINT_RUSTFLAGS", "--deny warnings")
+        .assert()
+        .success();
+}
+
+#[test]
+fn markdown_link_check() {
+    let tempdir = tempdir().unwrap();
+
+    Command::new("npm")
+        .args(["install", "markdown-link-check"])
+        .current_dir(&tempdir)
+        .assert()
+        .success();
+
+    // smoelius: https://github.com/rust-lang/crates.io/issues/788
+    let config = Path::new(concat!(
+        env!("CARGO_MANIFEST_DIR"),
+        "/tests/markdown_link_check.json"
+    ));
+
+    let readme_md = Path::new(concat!(env!("CARGO_MANIFEST_DIR"), "/README.md"));
+
+    Command::new("npx")
+        .args([
+            "markdown-link-check",
+            "--config",
+            &config.to_string_lossy(),
+            &readme_md.to_string_lossy(),
+        ])
+        .current_dir(&tempdir)
+        .assert()
+        .success();
+}
+
+#[test]
+fn readme_reference_links_are_sorted() {
+    let re = Regex::new(r"^\[[^\]]*\]:").unwrap();
+    let readme = read_to_string("README.md").unwrap();
+    let links = readme
+        .lines()
+        .filter(|line| re.is_match(line))
+        .collect::<Vec<_>>();
+    let mut links_sorted = links.clone();
+    links_sorted.sort_unstable();
+    assert_eq!(links_sorted, links);
+}
+
+#[test]
+fn readme_reference_links_are_used() {
+    let re = Regex::new(r"(?m)^(\[[^\]]*\]):").unwrap();
+    let readme = read_to_string("README.md").unwrap();
+    for captures in re.captures_iter(&readme) {
+        assert_eq!(2, captures.len());
+        let m = captures.get(1).unwrap();
+        assert!(
+            readme[..m.start()].contains(m.as_str()),
+            "{} is unused",
+            m.as_str()
+        );
+    }
+}

@@ -11,9 +11,16 @@ repository = "https://github.com/smoelius/methodify"
 proc-macro = true
 
 [dependencies]
-proc-macro2 = "1"
-quote = "1"
-syn = { version = "2", features = ["full"] }
+proc-macro2 = "1.0"
+quote = "1.0"
+syn = { version = "2.0", features = ["full"] }
 
 [dev-dependencies]
-snapbox = "1.2.1"
+assert_cmd = "2.2"
+regex = "1.12"
+snapbox = "1.2"
+tempfile = "3.27"
+
+[lints.rust.unexpected_cfgs]
+level = "warn"
+check-cfg = ["cfg(dylint_lib, values(any()))"]
