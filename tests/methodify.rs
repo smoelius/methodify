@@ -20,7 +20,7 @@ fn push_if_executable(paths: &mut Vec<PathBuf>, path: PathBuf) {
 
 #[methodify]
 fn executable_count(paths: &[PathBuf]) -> usize {
-    paths.iter().filter(|path| path.is_executable()).count()
+    paths.iter().filter(IsExecutable::is_executable).count()
 }
 
 #[methodify]
