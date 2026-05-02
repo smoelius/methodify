@@ -38,6 +38,7 @@ fn compile_fail(fixture: &str, stderr: &str) {
         .arg("--manifest-path")
         .arg(format!("tests/fixtures/{fixture}/Cargo.toml"))
         .env("CARGO_TARGET_DIR", format!("target/snapbox/{fixture}"))
+        .env("CARGO_TERM_COLOR", "never")
         .assert()
         .failure()
         .stderr_eq(stderr);
