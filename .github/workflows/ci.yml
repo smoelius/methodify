@@ -37,7 +37,7 @@ jobs:
           rustup component add clippy --toolchain nightly
 
       - name: Install CI tools
-        run: cargo install cargo-dylint dylint-link
+        run: cargo install cargo-dylint dylint-link || true
 
       - name: Test
         run: cargo test
