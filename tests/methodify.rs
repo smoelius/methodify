@@ -6,6 +6,7 @@ use std::path::{Path, PathBuf};
 fn is_executable<P: AsRef<Path>>(path: &P) -> bool {
     let path = path.as_ref();
 
+    #[cfg_attr(dylint_lib = "supplementary", allow(unnamed_constant))]
     path.metadata()
         .is_ok_and(|metadata| metadata.is_file() && metadata.permissions().mode() & 0o111 != 0)
 }
@@ -36,7 +37,7 @@ fn turns_first_argument_into_receiver() {
     executable_paths.push_if_executable(executable.clone());
     assert_eq!(executable_paths, vec![executable.clone()]);
 
-    assert_eq!(executable_paths.as_slice().executable_count(), 1);
+    assert_eq!(1, executable_paths.as_slice().executable_count());
 
     assert!(executable_paths.as_slice().has_executable());
 }
