@@ -22,11 +22,11 @@
 //! ```
 
 use proc_macro::TokenStream;
-use proc_macro2::Span;
+use proc_macro2::{Span, TokenStream as TokenStream2};
 use quote::quote;
 use syn::{
-    parse_macro_input, parse_quote, Error, FnArg, Ident, ItemFn, Pat, PatIdent, Receiver, Result,
-    Type,
+    Error, FnArg, Ident, ItemFn, Pat, PatIdent, Receiver, Result, Type, parse_macro_input,
+    parse_quote,
 };
 
 #[proc_macro_attribute]
@@ -47,7 +47,7 @@ pub fn methodify(args: TokenStream, input: TokenStream) -> TokenStream {
         .into()
 }
 
-fn expand(function: ItemFn) -> Result<proc_macro2::TokenStream> {
+fn expand(function: ItemFn) -> Result<TokenStream2> {
     if function.sig.asyncness.is_some() {
         return Err(Error::new_spanned(
             function.sig.asyncness,
@@ -124,7 +124,7 @@ fn impl_type_for(first_arg: &FnArg) -> Result<Type> {
     }
 }
 
-fn first_arg_name(first_arg: &FnArg) -> Result<proc_macro2::TokenStream> {
+fn first_arg_name(first_arg: &FnArg) -> Result<TokenStream2> {
     let FnArg::Typed(arg) = first_arg else {
         return Err(Error::new_spanned(first_arg, "expected a typed argument"));
     };
@@ -136,7 +136,7 @@ fn first_arg_name(first_arg: &FnArg) -> Result<proc_macro2::TokenStream> {
     }
 }
 
-fn argument_expression(arg: &FnArg) -> proc_macro2::TokenStream {
+fn argument_expression(arg: &FnArg) -> TokenStream2 {
     match arg {
         FnArg::Typed(arg) => match arg.pat.as_ref() {
             Pat::Ident(PatIdent { ident, .. }) => quote!(#ident),
