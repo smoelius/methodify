@@ -75,7 +75,6 @@ fn expand(function: &ItemFn) -> Result<TokenStream2> {
     *first_arg = FnArg::Receiver(receiver);
     method_sig.generics = Generics::default();
 
-    let first_arg_name = first_arg_name(function.sig.inputs.first().expect("checked above"))?;
     let function_name = &function.sig.ident;
     let trait_name = trait_name_for(function_name);
     let visibility = &function.vis;
@@ -90,7 +89,7 @@ fn expand(function: &ItemFn) -> Result<TokenStream2> {
 
         impl #impl_generics #trait_name #trait_type_generics for #impl_type #where_clause {
             #method_sig {
-                #function_name(#first_arg_name, #(#remaining_args),*)
+                #function_name(self, #(#remaining_args),*)
             }
         }
 
@@ -122,14 +121,6 @@ fn impl_type_for(first_arg: &FnArg) -> Result<Type> {
         Type::Reference(reference) => Ok((*reference.elem).clone()),
         ty => Ok(ty.clone()),
     }
-}
-
-fn first_arg_name(first_arg: &FnArg) -> Result<TokenStream2> {
-    let FnArg::Typed(_) = first_arg else {
-        return Err(Error::new_spanned(first_arg, "expected a typed argument"));
-    };
-
-    Ok(quote!(self))
 }
 
 fn argument_expression(arg: &FnArg) -> TokenStream2 {
