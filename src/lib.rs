@@ -25,7 +25,7 @@ use proc_macro::TokenStream;
 use proc_macro2::{Span, TokenStream as TokenStream2};
 use quote::quote;
 use syn::{
-    Error, FnArg, Generics, Ident, ItemFn, Pat, PatIdent, Receiver, Result, Type,
+    Error, FnArg, Generics, Ident, ItemFn, Pat, PatIdent, PatType, Receiver, Result, Type,
     parse_macro_input, parse_quote,
 };
 
@@ -63,6 +63,7 @@ fn expand(function: &ItemFn) -> Result<TokenStream2> {
     }
 
     let mut method_sig = function.sig.clone();
+
     let first_arg = method_sig.inputs.first_mut().ok_or_else(|| {
         Error::new_spanned(
             &method_sig.ident,
@@ -70,8 +71,15 @@ fn expand(function: &ItemFn) -> Result<TokenStream2> {
         )
     })?;
 
-    let receiver = receiver_for(first_arg)?;
-    let impl_type = impl_type_for(first_arg)?;
+    let FnArg::Typed(arg) = first_arg else {
+        return Err(Error::new_spanned(
+            first_arg,
+            "`#[methodify]` expects the first argument to be a normal function parameter",
+        ));
+    };
+
+    let receiver = receiver_for(arg);
+    let impl_type = impl_type_for(arg);
     *first_arg = FnArg::Receiver(receiver);
     method_sig.generics = Generics::default();
 
@@ -97,29 +105,18 @@ fn expand(function: &ItemFn) -> Result<TokenStream2> {
     })
 }
 
-fn receiver_for(first_arg: &FnArg) -> Result<Receiver> {
-    let FnArg::Typed(arg) = first_arg else {
-        return Err(Error::new_spanned(
-            first_arg,
-            "`#[methodify]` expects the first argument to be a normal function parameter",
-        ));
-    };
-
+fn receiver_for(arg: &PatType) -> Receiver {
     match arg.ty.as_ref() {
-        Type::Reference(reference) if reference.mutability.is_some() => Ok(parse_quote!(&mut self)),
-        Type::Reference(_) => Ok(parse_quote!(&self)),
-        _ => Ok(parse_quote!(self)),
+        Type::Reference(reference) if reference.mutability.is_some() => parse_quote!(&mut self),
+        Type::Reference(_) => parse_quote!(&self),
+        _ => parse_quote!(self),
     }
 }
 
-fn impl_type_for(first_arg: &FnArg) -> Result<Type> {
-    let FnArg::Typed(arg) = first_arg else {
-        return Err(Error::new_spanned(first_arg, "expected a typed argument"));
-    };
-
+fn impl_type_for(arg: &PatType) -> Type {
     match arg.ty.as_ref() {
-        Type::Reference(reference) => Ok((*reference.elem).clone()),
-        ty => Ok(ty.clone()),
+        Type::Reference(reference) => (*reference.elem).clone(),
+        ty => ty.clone(),
     }
 }
 
