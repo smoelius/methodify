@@ -1,6 +1,6 @@
 [package]
 name = "methodify"
-version = "0.1.0"
+version = "0.1.1"
 authors = ["Samuel Moelius <sam@moeli.us>"]
 description = "Proc macro attribute that turns a function into a trait method for its first argument"
 edition = "2021"
