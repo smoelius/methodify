@@ -55,3 +55,14 @@ The first argument becomes the method receiver:
 - `value: T` becomes `self`
 - `value: &T` becomes `&self`
 - `value: &mut T` becomes `&mut self`
+
+## Using `methodify`
+
+`methodify` is a minimal procedural macro, but it depends on [`proc-macro2`],
+[`quote`], and [`syn`]. If compatible versions of these crates are not already
+in your dependency tree, then using `methodify` will add them. Consider the
+resulting compile-time cost when deciding whether to use `methodify`.
+
+[`proc-macro2`]: https://crates.io/crates/proc-macro2
+[`quote`]: https://crates.io/crates/quote
+[`syn`]: https://crates.io/crates/syn
