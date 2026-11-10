@@ -5,6 +5,8 @@
 - a trait declaration
 - an implementation of that trait for the function's first argument
 
+## Example
+
 The following example is inspired by [Nick Fitzgerald](https://github.com/fitzgen)'s [`is_executable`](https://github.com/fitzgen/is_executable):
 
 ```rust
@@ -56,7 +58,32 @@ The first argument becomes the method receiver:
 - `value: &T` becomes `&self`
 - `value: &mut T` becomes `&mut self`
 
-## Using `methodify`
+## Advantages of using `methodify`
+
+Using method calls can make code easier to read, e.g., when operations must be performed in sequence.
+
+Suppose one has a function `dry`:
+
+```rust
+#[methodify]
+fn dry(clothes: &mut Clothes) -> &mut Clothes { ... }
+```
+
+Assuming appropriate `wash` and `fold` methods exist, one could construct the following call sequence:
+
+```rust
+dry(clothes.wash()).fold();
+```
+
+But using method calls makes the operation order evident in the syntax:
+
+```rust
+clothes.wash().dry().fold();
+```
+
+Applying `#[methodify]` to `dry` enables the latter form.
+
+## Disadvantages of using `methodify`
 
 `methodify` is a minimal procedural macro, but it depends on [`proc-macro2`],
 [`quote`], and [`syn`]. If compatible versions of these crates are not already
